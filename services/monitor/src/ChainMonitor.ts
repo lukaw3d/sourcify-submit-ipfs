@@ -99,6 +99,12 @@ export default class ChainMonitor extends EventEmitter {
       // Start polling
       this.pollBlocks(this.startBlock);
 
+      {
+        const address = '0xa55C7E1274bE5db2275a0BDd055f81e8263b7954'
+        const creatorTxHash = '0x' + (await (await fetch("https://testnet.nexus.oasis.io/v1/sapphire/accounts/"+address)).json()).evm_contract.eth_creation_tx;
+        if (creatorTxHash === '0x') throw 'bad creatorTxHash'
+        this.processNewContract(creatorTxHash, address);
+      }
       // Listen to new blocks
       this.on(NEW_BLOCK_EVENT, this.processBlockListener);
 
@@ -250,7 +256,7 @@ export default class ChainMonitor extends EventEmitter {
 
   // Function triggered when a new contract is found in a block.
   // Gets the contract bytecode, decodes the metadata hash, assembles the contract's files from DecentralizedStorage, and sends them to Sourcify servers.
-  private processNewContract = async (
+  public processNewContract = async (
     creatorTxHash: string,
     address: string,
   ) => {
