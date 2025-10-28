@@ -1,4 +1,4 @@
-import { FileHash } from "./util";
+import type { FileHash } from "./util";
 import logger from "./logger";
 import {
   DecentralizedStorageConfig,
@@ -7,7 +7,6 @@ import {
 import assert from "assert";
 import { EventEmitter } from "stream";
 import { GatewayFetcher } from "./GatewayFetcher";
-import defaultConfig from "./defaultConfig";
 import { Logger } from "winston";
 
 /**
@@ -45,15 +44,9 @@ export default class DecentralizedStorageFetcher extends EventEmitter {
           //  if not available then use defaultConfig
           return new GatewayFetcher({
             url: gateway,
-            timeout:
-              decentralizedStorageConfig.timeout ||
-              defaultConfig.decentralizedStorages.ipfs.timeout,
-            interval:
-              decentralizedStorageConfig.interval ||
-              defaultConfig.decentralizedStorages.ipfs.interval,
-            retries:
-              decentralizedStorageConfig.retries ||
-              defaultConfig.decentralizedStorages.ipfs.retries,
+            timeout: decentralizedStorageConfig.timeout!,
+            interval: decentralizedStorageConfig.interval!,
+            retries: decentralizedStorageConfig.retries!,
             headers: decentralizedStorageConfig.headers,
           });
         } else if (gateway.url) {
@@ -64,16 +57,13 @@ export default class DecentralizedStorageFetcher extends EventEmitter {
             url: gateway.url,
             timeout:
               gateway.timeout ||
-              decentralizedStorageConfig.timeout ||
-              defaultConfig.decentralizedStorages.ipfs.timeout,
+              decentralizedStorageConfig.timeout!,
             interval:
               gateway.interval ||
-              decentralizedStorageConfig.interval ||
-              defaultConfig.decentralizedStorages.ipfs.interval,
+              decentralizedStorageConfig.interval!,
             retries:
               gateway.retries ||
-              decentralizedStorageConfig.retries ||
-              defaultConfig.decentralizedStorages.ipfs.retries,
+              decentralizedStorageConfig.retries!,
             headers: gateway.headers || decentralizedStorageConfig.headers,
           });
         } else {

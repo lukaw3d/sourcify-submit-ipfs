@@ -1,78 +1,77 @@
-import { Command } from "commander";
-import fs from "fs";
-import Monitor from "./Monitor";
-import { PassedMonitorConfig } from "./types";
-import path from "path";
+import { FileHash } from "./util";
+import {
+  AuxdataStyle,
+  decode as bytecodeDecode,
+} from "@ethereum-sourcify/bytecode-utils";
+import PendingContract from "./PendingContract";
+import DecentralizedStorageFetcher from './DecentralizedStorageFetcher';
 
-// Initialize a new commander object
-const program = new Command();
+function isEmpty(obj: object): boolean {
+  return !Object.keys(obj).length && obj.constructor === Object;
+}
 
-// Setup command line flags
-program
-  .option(
-    "--configPath <path>",
-    "Path to the configuration JSON file",
-    path.resolve(__dirname, "../config.json"),
-  )
-  .option(
-    "--chainsPath <path>",
-    "Path to the chains JSON file",
-    path.resolve(__dirname, "../monitorChains.json"),
+async function start() {
+  // testnet 23295
+  // mainnet 23294
+  const chainId = 23295;
+  const address = '0xa55C7E1274bE5db2275a0BDd055f81e8263b7954'
+  const nexusResponse = (await (await fetch("https://testnet.nexus.oasis.io/v1/sapphire/accounts/"+address)).json())
+  const creatorTxHash = nexusResponse.evm_contract.eth_creation_tx ? '0x' + nexusResponse.evm_contract.eth_creation_tx : undefined;
+  const bytecode: string = '0x' + Buffer.from(nexusResponse.evm_contract.runtime_bytecode, 'base64').toString('hex');
+  if (!nexusResponse.evm_contract.runtime_bytecode) throw 'no bytecode'
+
+  let metadataHash: FileHash;
+  try {
+    /**
+     * We decode the bytecode using `AuxdataStyle.SOLIDITY` since Solidity is currently
+     * the only smart contract language that includes metadata information in its bytecode.
+     * This metadata contains an IPFS CID that points to a JSON file with the contract's
+     * source code and compiler settings.
+     */
+    const cborData = bytecodeDecode(bytecode, AuxdataStyle.SOLIDITY);
+    metadataHash = FileHash.fromCborData(cborData);
+  } catch (err: any) {
+    console.log("Error extracting cborAuxdata or metadata hash", {
+      address,
+      err,
+    });
+    return;
+  }
+
+  const pendingContract = new PendingContract(
+    metadataHash,
+    address,
+    chainId,
+    {
+      ipfs: new DecentralizedStorageFetcher(
+        "ipfs",
+        {
+          enabled: true,
+          gateways: ["https://ipfs.io/ipfs/"],
+          timeout: 30000,
+          interval: 5000,
+          retries: 5,
+        }
+      )
+    },
   );
-
-// Parse the arguments
-program.parse(process.argv);
-
-// Access options using program.opts()
-const options = program.opts();
-
-// Load JSON with existence check
-function loadJSON(filePath: string, throws = true) {
-  const absolutePath = path.isAbsolute(filePath)
-    ? filePath
-    : path.join(process.cwd(), filePath);
-
-  if (fs.existsSync(absolutePath)) {
-    const jsonData = fs.readFileSync(absolutePath, "utf8");
-    if (!jsonData) {
-      if (throws) throw new Error(`File ${absolutePath} exists but is empty.`);
-      console.warn(`File ${absolutePath} exists but is empty.`);
-      return undefined;
-    }
-    let json;
-
-    try {
-      json = JSON.parse(jsonData);
-    } catch (error) {
-      throw new Error(`File ${absolutePath} is not valid JSON.`);
-    }
-    return json;
-  } else {
-    if (throws) throw new Error(`File ${absolutePath} does not exist.`);
-    console.warn(`File ${absolutePath} does not exist. Using default values.`);
-    return undefined;
+  console.log("New pending contract", { address, metadataHash });
+  try {
+    await pendingContract.assemble();
+  } catch (err: any) {
+    console.log("Couldn't assemble contract", { address, err });
+    return;
   }
+  if (!isEmpty(pendingContract.pendingSources)) {
+    console.warn("PendingSources not empty", {
+      address: pendingContract.address,
+      pendingSources: pendingContract.pendingSources,
+    });
+    return;
+  }
+
+  console.log("Contract assembled", { address, metadataHash, pendingContract });
+  await pendingContract.sendToSourcifyServer(creatorTxHash);
 }
 
-const config = loadJSON(options.configPath, false) as
-  | PassedMonitorConfig
-  | undefined;
-const monitoredChains = loadJSON(options.chainsPath) as
-  | { chainId: number; rpc: string[]; name: string }[]
-  | undefined;
-
-if (monitoredChains) {
-  if (require.main === module) {
-    const monitor = new Monitor(monitoredChains, config);
-    monitor
-      .start()
-      .then(() => {
-        console.log("Monitor started successfully");
-      })
-      .catch((error) => {
-        console.error("Failed to start monitor", error);
-      });
-  }
-} else {
-  console.error("Failed to load config and/or chains.");
-}
+start().catch(e => console.error(e))

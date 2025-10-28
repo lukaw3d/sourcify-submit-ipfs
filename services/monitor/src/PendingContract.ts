@@ -124,7 +124,6 @@ export default class PendingContract {
   };
 
   public sendToSourcifyServer = async (
-    sourcifyServerURL: string,
     creatorTxHash?: string,
   ): Promise<any> => {
     // format in { "source1.sol": "Contract A { ...}", "source2.sol": "Contract B { ...}" } format
@@ -138,46 +137,22 @@ export default class PendingContract {
       formattedSources[sourceUnitName] = source.content;
     }
 
-    let response: Response;
-    try {
-      // Send to Sourcify server.
-      response = await fetch(sourcifyServerURL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "sourcify-monitor",
-        },
-        body: JSON.stringify({
-          chainId: this.chainId.toString(),
-          address: this.address,
-          files: {
-            ...formattedSources,
-            "metadata.json": JSON.stringify(this.metadata),
-          },
-          creatorTxHash,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Error sending contract ${this.address} to Sourcify server ${sourcifyServerURL} - response status not ok: ${response.statusText} ${await response.text()}`,
-        );
-      }
-    } catch (error: any) {
-      throw new Error(
-        `Error sending contract ${this.address} to Sourcify server ${sourcifyServerURL} - network error: ${error.message}`,
-      );
-    }
-
-    this.contractLogger.info(
-      "[PendingContract.sendToSourcifyServer] Contract sent",
-      {
-        address: this.address,
-        chainId: this.chainId,
-        sourcifyServerURL,
+    return await (await fetch('https://sourcify.dev/server/', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "sourcify-monitor",
       },
-    );
-    return await response.json();
+      body: JSON.stringify({
+        chainId: this.chainId.toString(),
+        address: this.address,
+        files: {
+          ...formattedSources,
+          "metadata.json": JSON.stringify(this.metadata),
+        },
+        creatorTxHash,
+      }),
+    })).json();
   };
 
   private movePendingToFetchedSources = (sourceUnitName: string) => {
