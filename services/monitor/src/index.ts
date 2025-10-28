@@ -13,9 +13,9 @@ function isEmpty(obj: object): boolean {
 async function start() {
   // testnet 23295
   // mainnet 23294
-  const chainId = 23295;
-  const address = '0xa55C7E1274bE5db2275a0BDd055f81e8263b7954'
-  const nexusResponse = (await (await fetch("https://testnet.nexus.oasis.io/v1/sapphire/accounts/"+address)).json())
+  const chainId = 23294;
+  const address = '0x7AC168c81F4F3820Fa3F22603ce5864D6aB3C547'
+  const nexusResponse = (await (await fetch("https://nexus.oasis.io/v1/sapphire/accounts/"+address)).json())
   const creatorTxHash = nexusResponse.evm_contract.eth_creation_tx ? '0x' + nexusResponse.evm_contract.eth_creation_tx : undefined;
   const bytecode: string = '0x' + Buffer.from(nexusResponse.evm_contract.runtime_bytecode, 'base64').toString('hex');
   if (!nexusResponse.evm_contract.runtime_bytecode) throw 'no bytecode'
