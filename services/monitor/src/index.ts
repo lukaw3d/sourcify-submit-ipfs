@@ -48,9 +48,9 @@ async function start() {
         {
           enabled: true,
           gateways: ["https://ipfs.io/ipfs/"],
-          timeout: 30000,
+          timeout: 10000,
           interval: 5000,
-          retries: 5,
+          retries: 1,
         }
       )
     },

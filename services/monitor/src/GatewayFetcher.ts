@@ -51,6 +51,7 @@ export class GatewayFetcher {
         const response = await Promise.race([
           fetch(fetchURL, {
             headers: this.headers,
+            signal: AbortSignal.timeout(this.fetchTimeout * 1.1),
           }),
           timeoutPromise,
         ]);
