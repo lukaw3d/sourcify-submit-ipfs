@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sourcify Monitor</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 2em;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 0.95em;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+      }
+      input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+      input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        width: 100%;
+        margin-top: 10px;
+      }
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .logs {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        max-height: 500px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .log-entry {
+        margin-bottom: 8px;
+        padding: 8px;
+        border-left: 3px solid #667eea;
+        background: white;
+        border-radius: 4px;
+      }
+      .log-entry.error {
+        border-left-color: #e74c3c;
+        background: #fee;
+      }
+      .log-entry.success {
+        border-left-color: #27ae60;
+        background: #efe;
+      }
+      .log-entry.warn {
+        border-left-color: #f39c12;
+        background: #fff8e1;
+      }
+      .status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+      .status.loading {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+      .status.success {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .status.error {
+        background: #ffebee;
+        color: #c62828;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔍 Sourcify Monitor</h1>
+      <p class="subtitle">Submit contract verification to Sourcify (automatically tries both Sapphire mainnet and testnet)</p>
+
+      <form id="contractForm">
+        <div class="form-group">
+          <label for="address">Contract Address</label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value="0xD2ee7104bD3c482f032a278EE8424A8f6FeD3313"
+            placeholder="0x..."
+            required
+          />
+        </div>
+
+        <button type="submit" id="submitBtn">Submit to Sourcify (Mainnet & Testnet)</button>
+      </form>
+
+      <div id="status" style="display: none;"></div>
+      <div id="logs" class="logs" style="display: none;"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
